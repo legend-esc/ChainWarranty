@@ -8,11 +8,6 @@ straight to the on-chain record, so anyone — a customer, a customs officer, a 
 buyer — can verify authenticity and warranty status without trusting a paper certificate
 or the seller's word.
 
-> **Status:** early-stage. The Soroban contract (`contracts/registry`) is implemented and
-> unit-tested but not yet audited or deployed to mainnet. The frontend, indexer, and
-> manufacturer API described below are the planned architecture and are not yet built —
-> see [Project status](#project-status).
-
 ---
 
 ## Table of contents
