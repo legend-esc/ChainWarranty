@@ -8,6 +8,11 @@ straight to the on-chain record, so anyone — a customer, a customs officer, a 
 buyer — can verify authenticity and warranty status without trusting a paper certificate
 or the seller's word.
 
+> **Status:** early-stage. The Soroban contract (`contracts/registry`) is implemented and
+> unit-tested. Testnet deployment completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`). The frontend, indexer, and
+> manufacturer API described below are the planned architecture and are not yet built —
+> see [Project status](#project-status).
+
 ---
 
 ## Table of contents
@@ -305,7 +310,7 @@ device except inside the URL itself, and is never sent to the contract.
 |---|---|
 | Soroban contract (`contracts/registry`) | ✅ Implemented, unit-tested locally |
 | Contract audit | ❌ Not done |
-| Testnet deployment | ❌ Not done |
+| Testnet deployment | ✅ Completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`) |
 | Web verification page | ❌ Not started |
 | Manufacturer dashboard | ❌ Not started |
 | Indexer service | ❌ Not started |
@@ -313,7 +318,7 @@ device except inside the URL itself, and is never sent to the contract.
 
 ## Roadmap
 
-- [ ] Deploy contract to testnet and record the contract ID here
+- [x] Deploy contract to testnet and record the contract ID here: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
 - [ ] Build the public verification page (`apps/web`)
 - [ ] Build the manufacturer minting dashboard + QR code generation
 - [ ] Build the indexer service and off-chain DB schema
@@ -331,9 +336,9 @@ cargo test
 Current coverage (`contracts/registry/src/test.rs`):
 - Full mint → transfer → file claim → resolve claim happy path
 - Voided tokens correctly block further transfers
-
-Contributions of additional test cases (expired-warranty claims, inactive-manufacturer
-minting attempts, unauthorized transfer attempts) are welcome.
+- Expired warranty claims fail with `WarrantyExpired`
+- Inactive manufacturer minting fails with `ManufacturerInactive`
+- Unauthorized transfers fail with `NotOwner`
 
 ## Contributing
 
