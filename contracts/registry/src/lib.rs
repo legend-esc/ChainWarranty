@@ -215,7 +215,7 @@ impl Registry {
         // Check warranty not expired (30-day months)
         let warranty_ts = token.warranty_months as u64 * 30 * 24 * 60 * 60;
         let expires_at = token.mint_ts + warranty_ts;
-        // Simulated current time - in real contract would use e.ledger().timestamp()
+        // Simulated current time
         let current_time = 2000u64;
         if current_time > expires_at {
             panic!("WarrantyExpired");
