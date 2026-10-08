@@ -122,13 +122,34 @@ chainwarranty/
 │       │   └── test.rs        # unit tests (soroban-sdk testutils)
 │       └── Cargo.toml
 ├── apps/
-│   ├── web/                   # planned: Next.js verification + manufacturer dashboard
+│   ├── web/                   # Next.js verification app + manufacturer dashboard (Day 4+)
+│   │   ├── src/app/
+│   │   │   ├── verify/[contractId]/[serial]/page.tsx  # public verification route
+│   │   │   └── layout.tsx / page.tsx / globals.css
+│   │   ├── src/lib/utils.ts   # SHA-256 hash, warranty math, formatting helpers
+│   │   ├── next.config.js
+│   │   └── package.json
 │   └── mobile/                # planned: QR-scan companion app (optional)
 ├── services/
-│   └── indexer/                # planned: listens to contract events, populates off-chain DB
+│   └── indexer/               # Event listener: subscribes to contract events, writes to Postgres
+│       ├── src/
+│       │   ├── index.ts       # main poll loop (mint/transfer/claim/void)
+│       │   ├── handlers.ts    # per-event DB write handlers
+│       │   └── db.ts          # Postgres pool wrapper
+│       ├── migrations/
+│       │   └── 001_initial_schema.sql  # tokens, transfers, claims, manufacturers, owner PII
+│       └── package.json
 ├── packages/
-│   └── sdk/                    # planned: shared TS client wrapping the contract's RPC calls
-├── Cargo.toml                  # Rust workspace root
+│   └── sdk/                   # Typed TypeScript client wrapping all 11 contract functions
+│       ├── src/
+│       │   ├── client.ts      # ChainWarrantyClient class
+│       │   ├── types.ts       # ProductToken, TransferEvent, Claim, enums
+│       │   ├── index.ts       # barrel export
+│       │   └── index.test.ts  # integration test: mint + verify round-trip
+│       └── package.json
+├── pnpm-workspace.yaml        # pnpm monorepo workspace
+├── package.json               # root workspace scripts
+├── Cargo.toml                 # Rust workspace root
 └── README.md
 ```
 
@@ -311,17 +332,19 @@ device except inside the URL itself, and is never sent to the contract.
 | Soroban contract (`contracts/registry`) | ✅ Implemented, unit-tested locally |
 | Contract audit | ❌ Not done |
 | Testnet deployment | ✅ Completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`) |
-| Web verification page | ❌ Not started |
+| Web verification page | ✅ Implemented (`apps/web`) |
 | Manufacturer dashboard | ❌ Not started |
-| Indexer service | ❌ Not started |
+| Indexer service | ✅ Implemented (`services/indexer`) |
+| TypeScript SDK | ✅ Implemented (`packages/sdk`) |
 | QR generation pipeline | ❌ Not started |
 
 ## Roadmap
 
 - [x] Deploy contract to testnet and record the contract ID here: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
-- [ ] Build the public verification page (`apps/web`)
+- [x] Build the public verification page (`apps/web`)
+- [x] Build the indexer service and off-chain DB schema
+- [x] Implement the TypeScript SDK (`packages/sdk`)
 - [ ] Build the manufacturer minting dashboard + QR code generation
-- [ ] Build the indexer service and off-chain DB schema
 - [ ] Add manufacturer key delegation / multisig support
 - [ ] Add warranty-policy-on-resale configuration
 - [ ] Third-party contract audit
