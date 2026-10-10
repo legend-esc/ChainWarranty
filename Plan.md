@@ -30,7 +30,7 @@ asking it to update the checkboxes below and the README's "Project status" table
 | 2 | Shared TypeScript SDK (`packages/sdk`) | Repository structure, Tech stack | 10% (done) | 35% |
 | 3 | Indexer service + off-chain schema | Architecture, Events | 10% (done) | 45% |
 | 4 | Public verification web app | How it works (steps 2–3), QR code format | 10% (done) | 55% |
-| 5 | Manufacturer dashboard | How it works (steps 1, 4, 5) | 10% | 65% |
+| 5 | Manufacturer dashboard | How it works (steps 1, 4, 5) | 10% (done) | 65% |
 | 6 | QR generation pipeline + full integration wiring | QR code format, Architecture | 10% | 75% |
 | 7 | E2E testing, CI/CD, docs polish, security pass | Testing, Contributing | 10% | **85%** |
 
@@ -295,13 +295,13 @@ itself is the authorization boundary (`require_auth` on manufacturer/admin addre
 so the dashboard shouldn't invent a separate login system.
 
 **Deliverables / Definition of done:**
-- [ ] Manufacturer-authenticated pages: mint a token, view/manage manufacturers
+- [x] Manufacturer-authenticated pages: mint a token, view/manage manufacturers
       (admin only), view and resolve pending claims, void a token
-- [ ] All state-changing calls go through wallet signing, not a backend-held key
-- [ ] Claims list pulls from the indexer's DB (Day 3) for speed, but resolution/void
+- [x] All state-changing calls go through wallet signing, not a backend-held key
+- [x] Claims list pulls from the indexer's DB (Day 3) for speed, but resolution/void
       actions write on-chain via `packages/sdk`, consistent with the Architecture
       section's "contract is the source of truth" principle
-- [ ] README Project status updated
+- [x] README Project status updated
 
 **Daily Prompt:**
 

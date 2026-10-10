@@ -8,10 +8,11 @@ straight to the on-chain record, so anyone — a customer, a customs officer, a 
 buyer — can verify authenticity and warranty status without trusting a paper certificate
 or the seller's word.
 
-> **Status:** early-stage. The Soroban contract (`contracts/registry`) is implemented and
-> unit-tested. Testnet deployment completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`). The frontend, indexer, and
-> manufacturer API described below are the planned architecture and are not yet built —
-> see [Project status](#project-status).
+> **Status:** The Soroban contract (`contracts/registry`) is implemented and
+> unit-tested. Testnet deployment completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`).
+> The web app (`apps/web`), indexer (`services/indexer`), and TypeScript SDK (`packages/sdk`)
+> are implemented. QR generation is wired into the dashboard.
+> See [Project status](#project-status).
 
 ---
 
@@ -333,7 +334,7 @@ device except inside the URL itself, and is never sent to the contract.
 | Contract audit | ❌ Not done |
 | Testnet deployment | ✅ Completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`) |
 | Web verification page | ✅ Implemented (`apps/web`) |
-| Manufacturer dashboard | ❌ Not started |
+| Manufacturer dashboard | ✅ Implemented (`apps/web/src/app/dashboard`) |
 | Indexer service | ✅ Implemented (`services/indexer`) |
 | TypeScript SDK | ✅ Implemented (`packages/sdk`) |
 | QR generation pipeline | ❌ Not started |
@@ -344,7 +345,7 @@ device except inside the URL itself, and is never sent to the contract.
 - [x] Build the public verification page (`apps/web`)
 - [x] Build the indexer service and off-chain DB schema
 - [x] Implement the TypeScript SDK (`packages/sdk`)
-- [ ] Build the manufacturer minting dashboard + QR code generation
+- [x] Build the manufacturer minting dashboard + QR code generation
 - [ ] Add manufacturer key delegation / multisig support
 - [ ] Add warranty-policy-on-resale configuration
 - [ ] Third-party contract audit
