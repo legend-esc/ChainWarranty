@@ -8,12 +8,6 @@ straight to the on-chain record, so anyone — a customer, a customs officer, a 
 buyer — can verify authenticity and warranty status without trusting a paper certificate
 or the seller's word.
 
-> **Status:** The Soroban contract (`contracts/registry`) is implemented and
-> unit-tested. Testnet deployment completed (CONTRACT_ID: `CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`).
-> The web app (`apps/web`), indexer (`services/indexer`), and TypeScript SDK (`packages/sdk`)
-> are implemented. QR generation is wired into the dashboard.
-> See [Project status](#project-status).
-
 ---
 
 ## Table of contents
