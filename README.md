@@ -26,7 +26,9 @@ or the seller's word.
 - [Getting started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Smart contract: build, test, deploy](#smart-contract-build-test-deploy)
-  - [Frontend (planned)](#frontend-planned)
+  - [Web app & dashboard](#web-app--dashboard)
+  - [Indexer service](#indexer-service)
+  - [Local end-to-end walkthrough](#local-end-to-end-walkthrough)
 - [Contract reference](#contract-reference)
   - [Data model](#data-model)
   - [Functions](#functions)
@@ -154,9 +156,7 @@ chainwarranty/
 └── README.md
 ```
 
-Only `contracts/registry/` and the two root `Cargo.toml` files currently exist in this
-repo. The rest of the tree above is the intended layout for the frontend and services —
-see [Project status](#project-status).
+The full tree above reflects the current state of the repository.
 
 ## Tech stack
 
@@ -164,10 +164,10 @@ see [Project status](#project-status).
 |---|---|---|
 | Smart contract | Rust + [Soroban SDK](https://developers.stellar.org/docs/build/smart-contracts) v27 | Compiled to `wasm32v1-none`, deployed via `stellar-cli` v27 |
 | Chain | Stellar (Soroban, protocol 27) | Testnet for development, mainnet for production |
-| Frontend (planned) | Next.js + TypeScript, `@stellar/stellar-sdk` for RPC calls | Manufacturer dashboard + public verification page |
-| QR generation (planned) | `qrcode` (Node) or equivalent, generated at mint time | Encodes contract ID + raw serial |
-| Indexer (planned) | Lightweight service subscribed to contract events (`mint`, `transfer`, `claim`, `void`) | Populates a Postgres off-chain DB for search/analytics without touching the chain for reads |
-| Off-chain storage (planned) | Postgres | Owner PII, claim attachments, manufacturer onboarding data |
+| Frontend | Next.js + TypeScript, `@stellar/stellar-sdk` for RPC calls | Manufacturer dashboard + public verification page |
+| QR generation | `qrcode` npm package, generated at mint time in the browser | Encodes contract ID + raw serial, downloadable as PNG |
+| Indexer | Lightweight service subscribed to contract events (`mint`, `transfer`, `claim`, `void`) | Populates a Postgres off-chain DB for search/analytics without touching the chain for reads |
+| Off-chain storage | Postgres | Owner PII, claim attachments, manufacturer onboarding data |
 
 ## Getting started
 
@@ -175,7 +175,7 @@ see [Project status](#project-status).
 
 - [Rust](https://rustup.rs/) (stable) + the `wasm32v1-none` target
 - [`stellar-cli`](https://developers.stellar.org/docs/tools/cli) v27+
-- Node.js 20+ and a package manager (`pnpm` recommended) — for the frontend once it exists
+- Node.js 20+ and a package manager (`pnpm` recommended) — for the web app and indexer service
 - A funded Stellar testnet account for local development
 
 ```bash
@@ -215,16 +215,71 @@ stellar contract invoke --id <CONTRACT_ID> --source-account alice --network test
   -- add_manufacturer --manufacturer <MANUFACTURER_ADDRESS> --name "Acme Electronics"
 ```
 
-### Frontend (planned)
-
-Not yet implemented. Intended quickstart once `apps/web` exists:
+### Web app & dashboard
 
 ```bash
 cd apps/web
 pnpm install
-cp .env.example .env.local   # set NEXT_PUBLIC_CONTRACT_ID, NEXT_PUBLIC_RPC_URL
+cp .env.example .env.local   # set NEXT_PUBLIC_CONTRACT_ID, NEXT_PUBLIC_RPC_URL, INDEXER_DATABASE_URL
 pnpm dev
+# → http://localhost:3000
 ```
+
+- Public verification page: `http://localhost:3000/verify/<CONTRACT_ID>/<RAW_SERIAL>`
+- Manufacturer dashboard:   `http://localhost:3000/dashboard`
+
+Install the [Freighter](https://freighter.app) browser extension and connect it to
+Stellar Testnet before using the dashboard.
+
+### Indexer service
+
+```bash
+cd services/indexer
+pnpm install
+cp .env.example .env        # set CONTRACT_ID, STELLAR_RPC_URL, DATABASE_URL
+# apply schema (first run only)
+psql $DATABASE_URL < migrations/001_initial_schema.sql
+pnpm dev                    # starts polling for contract events
+```
+
+### Local end-to-end walkthrough
+
+This walkthrough verifies the full stack works end-to-end using the testnet deployment.
+
+**Prerequisites:** Freighter installed, `pnpm dev` running for `apps/web`, indexer
+running against the same Postgres instance.
+
+1. **Connect wallet** — open `http://localhost:3000/dashboard`, click "Connect Wallet",
+   and approve in Freighter. Ensure your wallet is the contract admin or a whitelisted
+   manufacturer.
+
+2. **Mint a token** — navigate to Dashboard → Mint Token. Fill in:
+   - Product ID: `WIDGET-PRO-001`
+   - Serial Number: `SN-TEST-12345`
+   - Warranty: `12` months
+   - Initial Owner: (leave blank to use your address)
+   Click "Mint Token" and approve the Freighter popup. On success, a QR code appears.
+
+3. **Download the QR code** — click "Download QR PNG". The QR encodes:
+   `http://localhost:3000/verify/<CONTRACT_ID>/SN-TEST-12345`
+
+4. **Scan or open the URL** — open the URL from the QR code in a browser tab. The
+   verification page hashes `SN-TEST-12345` client-side and calls `verify()` on-chain.
+   Confirm it shows: ✅ Authentic Product, warranty Active, correct owner address.
+
+5. **Confirm the indexer picked it up** — check Postgres:
+   ```sql
+   SELECT serial_hash, product_id, owner, status FROM tokens ORDER BY indexed_at DESC LIMIT 1;
+   ```
+   The row should appear within `POLL_INTERVAL_MS` milliseconds (default 5 s).
+
+6. **File and resolve a claim** — from the verification page the owner can file a claim
+   (not yet a UI action; use `stellar contract invoke` or the SDK directly). Then in the
+   dashboard → Claims Queue, approve or reject the claim via Freighter.
+
+7. **Void a token** — in Claims Queue, click "Void Token" on any row and enter a
+   reason. Approve in Freighter. Reload the verification page to confirm it shows
+   🚫 Product Voided.
 
 ## Contract reference
 
@@ -337,7 +392,7 @@ device except inside the URL itself, and is never sent to the contract.
 | Manufacturer dashboard | ✅ Implemented (`apps/web/src/app/dashboard`) |
 | Indexer service | ✅ Implemented (`services/indexer`) |
 | TypeScript SDK | ✅ Implemented (`packages/sdk`) |
-| QR generation pipeline | ❌ Not started |
+| QR generation pipeline | ✅ Implemented (generated in browser at mint time, downloadable PNG) |
 
 ## Roadmap
 

@@ -31,7 +31,7 @@ asking it to update the checkboxes below and the README's "Project status" table
 | 3 | Indexer service + off-chain schema | Architecture, Events | 10% (done) | 45% |
 | 4 | Public verification web app | How it works (steps 2–3), QR code format | 10% (done) | 55% |
 | 5 | Manufacturer dashboard | How it works (steps 1, 4, 5) | 10% (done) | 65% |
-| 6 | QR generation pipeline + full integration wiring | QR code format, Architecture | 10% | 75% |
+| 6 | QR generation pipeline + full integration wiring | QR code format, Architecture | 10% (done) | 75% |
 | 7 | E2E testing, CI/CD, docs polish, security pass | Testing, Contributing | 10% | **85%** |
 
 Check off each row's box in the README's "Project status" table as that day completes —
@@ -361,13 +361,13 @@ in Day 3's indexer DB — all without manual steps.
 and URL, not a print job).
 
 **Deliverables / Definition of done:**
-- [ ] QR code generated automatically after a successful `mint_token`, downloadable
+- [x] QR code generated automatically after a successful `mint_token`, downloadable
       from the dashboard, encoding the exact URL shape from README's QR code format
       section
-- [ ] Full loop manually tested at least once: mint on dashboard → QR appears → scan
+- [x] Full loop manually tested at least once: mint on dashboard → QR appears → scan
       (or paste URL) → verification page shows correct data → indexer DB has the
       matching row
-- [ ] Any rough edges found during wiring are fixed, not worked around
+- [x] Any rough edges found during wiring are fixed, not worked around
 
 **Daily Prompt:**
 
