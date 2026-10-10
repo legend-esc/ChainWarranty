@@ -5,6 +5,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "e2e": "pnpm --filter chainwarranty-scripts e2e"
   }
 }
+

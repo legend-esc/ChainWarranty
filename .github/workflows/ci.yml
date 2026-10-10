@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. Soroban contract: build + unit tests
+  # ─────────────────────────────────────────────
+  contract:
+    name: Contract (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run contract unit tests
+        run: cargo test --manifest-path contracts/registry/Cargo.toml
+
+      - name: Build WASM (release)
+        run: |
+          cargo build \
+            --manifest-path contracts/registry/Cargo.toml \
+            --target wasm32v1-none \
+            --release
+
+  # ─────────────────────────────────────────────
+  # 2. TypeScript SDK: typecheck + unit test
+  # ─────────────────────────────────────────────
+  sdk:
+    name: SDK (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck SDK
+        run: pnpm --filter @chainwarranty/sdk typecheck
+
+  # ─────────────────────────────────────────────
+  # 3. Indexer: typecheck + build
+  # ─────────────────────────────────────────────
+  indexer:
+    name: Indexer (TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck indexer
+        run: pnpm --filter @chainwarranty/indexer typecheck
+
+  # ─────────────────────────────────────────────
+  # 4. Web app: typecheck + lint + build
+  # ─────────────────────────────────────────────
+  web:
+    name: Web app (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck web app
+        run: pnpm --filter @chainwarranty/web typecheck
+
+      - name: Lint web app
+        run: pnpm --filter @chainwarranty/web lint
+
+      - name: Build web app
+        env:
+          # Use placeholder values so Next.js build doesn't fail on missing env vars
+          NEXT_PUBLIC_CONTRACT_ID: CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+          NEXT_PUBLIC_RPC_URL: https://soroban-testnet.stellar.org
+        run: pnpm --filter @chainwarranty/web build
