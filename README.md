@@ -408,21 +408,46 @@ device except inside the URL itself, and is never sent to the contract.
 
 ## Testing
 
+### Contract unit tests
+
 ```bash
 cargo test
 ```
 
-Current coverage (`contracts/registry/src/test.rs`):
+Coverage (`contracts/registry/src/test.rs`):
 - Full mint → transfer → file claim → resolve claim happy path
 - Voided tokens correctly block further transfers
 - Expired warranty claims fail with `WarrantyExpired`
 - Inactive manufacturer minting fails with `ManufacturerInactive`
 - Unauthorized transfers fail with `NotOwner`
 
+### End-to-end test
+
+`scripts/e2e-test.ts` covers the full mint → verify → QR URL → indexer DB loop
+against the real testnet deployment:
+
+```bash
+export CONTRACT_ID=<testnet contract ID>
+export ADMIN_SECRET=<admin keypair secret>
+export MFR_SECRET=<manufacturer keypair secret>
+export DATABASE_URL=postgresql://localhost/chainwarranty  # optional
+
+pnpm e2e
+```
+
+### CI
+
+Every pull request runs `.github/workflows/ci.yml`, which checks:
+- `cargo test` for the Soroban contract
+- TypeScript typecheck for `packages/sdk`, `services/indexer`, and `apps/web`
+- ESLint and Next.js build for `apps/web`
+
 ## Contributing
 
-Issues and pull requests are welcome. For contract changes, please include or update
-unit tests in `contracts/registry/src/test.rs` and run `cargo test` before submitting.
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for local
+setup instructions, E2E test usage, and CI requirements. For contract changes, include
+or update unit tests in `contracts/registry/src/test.rs` and run `cargo test` before
+submitting.
 
 ## License
 
