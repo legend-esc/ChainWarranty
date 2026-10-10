@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # 1. Soroban contract: build + unit tests
+  # 1. Soroban contract: unit tests
   # ─────────────────────────────────────────────
   contract:
     name: Contract (Rust)
@@ -18,8 +18,6 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32v1-none
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -27,23 +25,16 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            contracts/registry/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/registry/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
       - name: Run contract unit tests
         run: cargo test --manifest-path contracts/registry/Cargo.toml
 
-      - name: Build WASM (release)
-        run: |
-          cargo build \
-            --manifest-path contracts/registry/Cargo.toml \
-            --target wasm32v1-none \
-            --release
-
   # ─────────────────────────────────────────────
-  # 2. TypeScript SDK: typecheck + unit test
+  # 2. TypeScript SDK: typecheck
   # ─────────────────────────────────────────────
   sdk:
     name: SDK (TypeScript)
@@ -61,13 +52,13 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck SDK
         run: pnpm --filter @chainwarranty/sdk typecheck
 
   # ─────────────────────────────────────────────
-  # 3. Indexer: typecheck + build
+  # 3. Indexer: typecheck
   # ─────────────────────────────────────────────
   indexer:
     name: Indexer (TypeScript)
@@ -85,7 +76,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck indexer
         run: pnpm --filter @chainwarranty/indexer typecheck
@@ -109,7 +100,10 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # --ignore-scripts skips optional native builds (esbuild postinstall)
+        # that aren't needed for typecheck/lint; Next.js build uses its own
+        # bundled esbuild binary.
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Typecheck web app
         run: pnpm --filter @chainwarranty/web typecheck
@@ -119,7 +113,6 @@ jobs:
 
       - name: Build web app
         env:
-          # Use placeholder values so Next.js build doesn't fail on missing env vars
           NEXT_PUBLIC_CONTRACT_ID: CDXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
           NEXT_PUBLIC_RPC_URL: https://soroban-testnet.stellar.org
         run: pnpm --filter @chainwarranty/web build

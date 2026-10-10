@@ -74,43 +74,35 @@ async function getLastLedger(): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
-// Decode a raw Soroban event and dispatch to the appropriate handler
+// Decode a Soroban EventResponse and dispatch to the appropriate handler.
+//
+// In @stellar/stellar-sdk 12.x, Server.getEvents() returns EventResponse
+// objects where topic is xdr.ScVal[] and value is xdr.ScVal — already parsed,
+// no parseRawScVal needed.
 // ---------------------------------------------------------------------------
 async function processEvent(
-  event: SorobanRpc.Api.RawEventResponse
+  event: SorobanRpc.Api.EventResponse
 ): Promise<void> {
-  if (!event.contractId || event.contractId !== CONTRACT_ID) return;
+  if (!event.contractId) return;
 
   // The first topic is the event type symbol (e.g. "mint")
-  const topics = event.topic.map((t) =>
-    scValToNative(SorobanRpc.Api.parseRawScVal(t))
-  );
+  const topics = event.topic.map((t) => scValToNative(t));
   const eventType = topics[0] as string;
 
   // The value holds the primary payload (owner address, claim id, etc.)
-  const value = event.value
-    ? scValToNative(SorobanRpc.Api.parseRawScVal(event.value))
-    : undefined;
+  const value = event.value ? scValToNative(event.value) : undefined;
 
-  const ledger_seq = event.ledger ? parseInt(event.ledger, 10) : undefined;
+  const ledger_seq = event.ledger ?? undefined;
 
-  // We need the full token state for mint events — pull it from the contract
-  // via a direct RPC call rather than trusting only the event payload, since
-  // the event only carries the initial owner (per README.md Events table).
   await withClient(async (client) => {
     switch (eventType) {
       case "mint": {
-        // payload: initial_owner (Stellar address)
-        // We need product details too — fetch them via getEvents contractData
-        // The serial_hash is in topics[1] per the contract implementation
         const serialHashRaw = topics[1] as Uint8Array | undefined;
         if (!serialHashRaw) {
           console.warn("[indexer] mint event missing serial_hash topic");
           return;
         }
         const serialHex = Buffer.from(serialHashRaw).toString("hex");
-        // For a full mint record we'd call verify() here; for indexer bootstrap
-        // we capture what the event provides and fill the rest on-demand.
         await handleMint(client, {
           serial_hash: serialHex,
           product_id: (topics[2] as string | undefined) ?? "",
@@ -129,8 +121,6 @@ async function processEvent(
         if (!serialHashRaw) return;
         const serialHex = Buffer.from(serialHashRaw).toString("hex");
         const newOwner = (value as string) ?? "";
-        // from_address would need to be fetched from the token — use "unknown" as
-        // a safe fallback; Day 6 wiring can refine this with a verify() call.
         await handleTransfer(client, {
           serial_hash: serialHex,
           from_address: (topics[2] as string | undefined) ?? "unknown",
@@ -172,7 +162,6 @@ async function processEvent(
       }
 
       default:
-        // Ignore events from other contracts or unknown topics
         break;
     }
   });
@@ -193,7 +182,7 @@ async function poll(): Promise<void> {
           type: "contract",
           contractIds: [CONTRACT_ID!],
           topics: [
-            ["*"], // matches any first topic (mint / transfer / claim / void)
+            ["*"],
           ],
         },
       ],
@@ -208,7 +197,7 @@ async function poll(): Promise<void> {
 
   for (const event of response.events) {
     try {
-      await processEvent(event as unknown as SorobanRpc.Api.RawEventResponse);
+      await processEvent(event);
     } catch (err) {
       console.error("[indexer] failed to process event:", err);
     }
@@ -227,13 +216,10 @@ async function main(): Promise<void> {
   await applySchema();
   console.log("[indexer] schema ready");
 
-  // Initial poll
   await poll();
 
-  // Recurring poll
   const timer = setInterval(poll, POLL_INTERVAL_MS);
 
-  // Graceful shutdown
   process.on("SIGINT", async () => {
     console.log("\n[indexer] shutting down…");
     clearInterval(timer);
